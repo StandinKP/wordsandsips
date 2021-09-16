@@ -1,0 +1,44 @@
+{% extends "layout.html" %} {% block body %}
+
+<h1>Dashboard</h1>
+<hr />
+{% include "includes/message.html" %}
+
+<h3>Recent orders</h3>
+
+<div class="row">
+  {% if orders %} {% for id in orders.keys() %}
+  <div class="col-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">
+          Order No. {{orders[id].order_no}} | {{orders[id].name}}
+        </h5>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Item</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in orders[id].order %}
+
+            <tr>
+              <th scope="row">{{loop.index}}</th>
+              <td>{{item.name}}</td>
+              <td>{{item.quantity}}</td>
+              <td>{{item.amount}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %} {% else %} No orders to display! {% endif %}
+</div>
+
+{% endblock %}
