@@ -85,28 +85,31 @@ def remove_from_cart(product_id):
 def confirm_order():
     cart_dict = session["cart"]["products"]
     cart = []
+    total = 0
     for product_id in list(cart_dict.keys()):
         pro = db.child("menu").child(product_id).get().val()
+        amount = int(pro.get("price")) * int(cart_dict[product_id])
         cart.append({
             "product_id": product_id,
             "name": pro.get("name"),
             "quantity": int(cart_dict[product_id]),
-            "amount": int(pro.get("price")) * int(cart_dict[product_id]),
+            "amount": amount ,
             "category": pro.get("category"),
         })
-    minutes = int((datetime.now() - datetime.fromisoformat(session["start_time"])).total_seconds()/60)
-    hours = int(minutes/60)
-    minute = minutes-(60*hours)
+        total += amount
+    order_id = randint(1, 99999)
     data = {
         "name": session["name"],
-        "order_no": randint(1, 99999),
+        "order_no": order_id,
         "order": cart,
-        "time": {
-            "hours": hours,
-            "minutes": minute
-        }
+        "total": total,
+        'location': session["location"],
+        "start_time": session["start_time"]
     }
+    if session["location"] == "inside":
+        data.update({"quantity": session["quantity"]})
     res = db.child("orders").push(data)
+    session["cart"] = {"products": [], "cart_total": 0}
     print(res)
     flash("Order placed", "success")
     return redirect(url_for("menu"))
@@ -151,7 +154,7 @@ def checkin():
         session['location'] = location
         session['table'] = table
         session["cart"] = {"products": {}, "cart_total":0}
-        
+
         if location == 'inside':
             return render_template("inside.html")
         else:
@@ -164,9 +167,11 @@ def checkin():
 def menu():
     if request.method == "POST":
         quantity = request.form['quantity']
-        time = datetime.now().isoformat()
-        session['start_time'] = time
-        res = db.child("users").child(session["id"]).update({"quantity":quantity,"start_time": time })
+        start_time = request.form['start_time']
+        print(start_time)
+        session["start_time"] = start_time
+        session["quantity"] = quantity
+        res = db.child("users").child(session["id"]).update({"quantity":quantity,"start_time": str(start_time) })
         print(res)
     menu  = db.child("menu").get().val()
     categories = set([menu[item]["category"] for item in menu.keys()])
@@ -263,5 +268,5 @@ def add_to_cart(product_id):
 
     
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=7001)
     
