@@ -122,10 +122,16 @@ def confirm_order():
     return redirect(url_for("menu"))
 
 
-@app.route('/add_cigarette/<string:order_id>')
-def add_cigarette(order_id):
-    order = db.child("orders").order_by_child("order_no").equal_to(order_id).child("order")
-    order.update({"cigarettes": order["cigarettes"] + 1})
+@app.route('/add_product/<string:order_id>')
+def add_product(order_id):
+    print(order_id)
+    order = db.child("orders").child(order_id).get().val()
+    if "cigarettes" in order.keys():
+        res = db.child("orders").child(order_id).child("order").push({"cigarettes": order["cigarettes"] + 1, "total": order["total"] + 20})
+    else:
+        res = db.child("orders").child(order_id).child("order").push({"cigarettes": 1, "total": order["total"] + 20})
+    flash("Product addedd successfully", "success")
+    return redirect(url_for("dashboard"))
 
 @app.route("/update_quantity/<product_id>/<quantity>")
 def update_product_quantity(product_id, quantity):
@@ -177,7 +183,12 @@ def checkin():
         return redirect(url_for('menu'))
 
 
+@app.route('/manage_tabs')
+def manage_tabs():
+    
 
+
+    return render_template("manage_tabs.html")
 
 @app.route('/menu')
 def menu():
@@ -259,6 +270,19 @@ def delete_order(id):
     db.child("orders").child(id).remove()
     return redirect(url_for("order_history"))
 
+@app.route('/add_member', methods=["POST"])
+def add_member():
+    name = request.form.get("name")
+    email = request.form.get("email")
+    password = request.form.get("name")
+    res = db.child("users").push({
+        "name": name,
+        "email": email,
+        "password": password,
+        "type": "tab"
+    })
+    flash("Added successfully", "success")
+    return redirect(url_for("manage_tabs"))
 
 
 @app.route('/admin/logout/')
