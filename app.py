@@ -110,7 +110,8 @@ def confirm_order():
         "total": session["cart"]["cart_total"] + session["service_charge"],
         'location': session["location"],
         "start_time": session["start_time"],
-        "status": "OPEN"
+        "status": "OPEN",
+        "type": session["type"]
     }
     if session["location"] == "inside":
         data.update({"quantity": session["quantity"]})
@@ -126,10 +127,13 @@ def confirm_order():
 def add_product(order_id):
     print(order_id)
     order = db.child("orders").child(order_id).get().val()
-    if "cigarettes" in order.keys():
-        res = db.child("orders").child(order_id).child("order").push({"cigarettes": order["cigarettes"] + 1, "total": order["total"] + 20})
-    else:
-        res = db.child("orders").child(order_id).child("order").push({"cigarettes": 1, "total": order["total"] + 20})
+    if "cigarettes" in [o.keys() for o in order["order"]]:
+        order["order"].append({"cigarettes": order["order"]})
+    print(order)
+    # if "cigarettes" in order.keys():
+    #     res = db.child("orders").child(order_id).child("order").update({"cigarettes": order["cigarettes"] + 1, "total": order["total"] + 20})
+    # else:
+    #     res = db.child("orders").child(order_id).child("order").push({"cigarettes": 1, "total": order["total"] + 20})
     flash("Product addedd successfully", "success")
     return redirect(url_for("dashboard"))
 
@@ -185,10 +189,10 @@ def checkin():
 
 @app.route('/manage_tabs')
 def manage_tabs():
-    
+    orders = db.child("orders").order_by_child("type").equal_to("tab").get().val()
 
 
-    return render_template("manage_tabs.html")
+    return render_template("manage_tabs.html", orders=orders)
 
 @app.route('/menu')
 def menu():
@@ -232,12 +236,26 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
         admin = db.child("admin").get().val()
-        if email == admin["email"] and password == admin["password"]:
-            session["logged_in"] = True
-            session["email"] = email
-            session['type'] = 'admin'
-            print('password matched')
-            return redirect(url_for('dashboard'))
+        user = db.child("users").order_by_child("email").equal_to(email).get().val()
+        if admin:
+            if email == admin["email"] and password == admin["password"]:
+                session["logged_in"] = True
+                session["email"] = email
+                session['type'] = 'admin'
+                print('password matched')
+                return redirect(url_for('dashboard'))
+        if user:
+            u = list(dict(user).values())[0]
+            print(u)
+            if email == u["email"] and password == u["password"]:
+                session["logged_in"] = True
+                session["email"] = email
+                session['type'] = 'tab'
+                session["name"] = u["name"]
+                print('password matched')
+                return redirect(url_for('tab_checkin'))
+            else:
+                print("no")
         
 
 
@@ -274,7 +292,7 @@ def delete_order(id):
 def add_member():
     name = request.form.get("name")
     email = request.form.get("email")
-    password = request.form.get("name")
+    password = request.form.get("password")
     res = db.child("users").push({
         "name": name,
         "email": email,
@@ -295,6 +313,7 @@ def logout():
     else:
         flash('You are not Logged in','secondary')
         return redirect(url_for('login'))
+
 
 @app.route('/add_to_cart/<string:product_id>')
 def add_to_cart(product_id):
@@ -318,6 +337,36 @@ def add_to_cart(product_id):
     flash("Added product to cart", "success")
     return redirect(url_for("menu"))
 
+
+@app.route('/tab_checkin', methods=['GET', 'POST'])
+def tab_checkin():
+    if request.method == "POST":
+        location = request.form['location']
+        table = request.form['table']
+        quantity = int(request.form['quantity'])
+        start_time = request.form['start_time']
+        data = {
+            "type":'customer',
+            "location": location,
+            "table": table,
+            "quantity": quantity,
+            "start_time": start_time
+        }
+        results = db.child("users").push(data)
+        session["id"] = results["name"]
+        session['location'] = location
+        session['table'] = table
+        session["cart"] = {"products": {}, "cart_total":0}
+        session["quantity"] = quantity
+        session["start_time"] = start_time
+        if location == 'inside':
+            session["service_charge"] = 100 * quantity
+        return redirect(url_for('menu'))
+
+
+
+
+    return render_template("tab_checkin.html")
     
 if __name__ == '__main__':
     app.run(debug=True, port=7001)
