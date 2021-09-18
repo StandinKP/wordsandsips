@@ -74,8 +74,12 @@ def checkout():
         total += int(pro.get("price")) * int(cart_dict[product_id])
     return render_template("checkout.html", cart=cart, total=total)
 
+
 @app.route('/remove_from_cart/<string:product_id>')
 def remove_from_cart(product_id):
+    product = db.child("menu").child(product_id).get().val()
+    price = product["price"]
+    session["cart"]["cart_total"] -= int(price) * int(session["cart"]["products"][product_id])
     del session["cart"]["products"][product_id]
     flash("Item deleted from cart!", "info")
     return redirect(url_for("checkout"))
@@ -85,7 +89,6 @@ def remove_from_cart(product_id):
 def confirm_order():
     cart_dict = session["cart"]["products"]
     cart = []
-    total = 0
     for product_id in list(cart_dict.keys()):
         pro = db.child("menu").child(product_id).get().val()
         amount = int(pro.get("price")) * int(cart_dict[product_id])
@@ -96,24 +99,33 @@ def confirm_order():
             "amount": amount ,
             "category": pro.get("category"),
         })
-        total += amount
     order_id = randint(1, 99999)
+    cart.append({
+        "entry_fee": session["service_charge"]
+    })
     data = {
         "name": session["name"],
         "order_no": order_id,
         "order": cart,
-        "total": total,
+        "total": session["cart"]["cart_total"] + session["service_charge"],
         'location': session["location"],
-        "start_time": session["start_time"]
+        "start_time": session["start_time"],
+        "status": "OPEN"
     }
     if session["location"] == "inside":
         data.update({"quantity": session["quantity"]})
     res = db.child("orders").push(data)
-    session["cart"] = {"products": [], "cart_total": 0}
+    session["cart"] = {"products": {}, "cart_total": 0}
+    session["service_charge"] = 0
     print(res)
     flash("Order placed", "success")
     return redirect(url_for("menu"))
 
+
+@app.route('/add_cigarette/<string:order_id>')
+def add_cigarette(order_id):
+    order = db.child("orders").order_by_child("order_no").equal_to(order_id).child("order")
+    order.update({"cigarettes": order["cigarettes"] + 1})
 
 @app.route("/update_quantity/<product_id>/<quantity>")
 def update_product_quantity(product_id, quantity):
@@ -140,12 +152,16 @@ def checkin():
         phone = request.form['phone']
         location = request.form['location']
         table = request.form['table']
+        quantity = int(request.form['quantity'])
+        start_time = request.form['start_time']
         data = {
             "name": name,
             "phone": phone,
             "type":'customer',
             "location": location,
             "table": table,
+            "quantity": quantity,
+            "start_time": start_time
         }
         results = db.child("users").push(data)
         session["name"] = name
@@ -154,29 +170,19 @@ def checkin():
         session['location'] = location
         session['table'] = table
         session["cart"] = {"products": {}, "cart_total":0}
-
-        if location == 'inside':
-            return render_template("inside.html")
-        else:
-            return redirect(url_for('menu'))
-
-
-
-
-@app.route('/menu', methods = ['GET','POST'])
-def menu():
-    if request.method == "POST":
-        quantity = request.form['quantity']
-        start_time = request.form['start_time']
-        print(start_time)
-        session["start_time"] = start_time
         session["quantity"] = quantity
-        res = db.child("users").child(session["id"]).update({"quantity":quantity,"start_time": str(start_time) })
-        print(res)
+        session["start_time"] = start_time
+        if location == 'inside':
+            session["service_charge"] = 100 * quantity
+        return redirect(url_for('menu'))
+
+
+
+
+@app.route('/menu')
+def menu():
     menu  = db.child("menu").get().val()
     categories = set([menu[item]["category"] for item in menu.keys()])
-    
-
     return render_template("menu.html", menu=menu, categories=categories)
 
 
@@ -209,7 +215,7 @@ def delete_menu(id):
     })
 
 
-@app.route('/admin/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == "POST":
         email = request.form.get("email")
@@ -230,8 +236,30 @@ def login():
 @app.route('/admin/dashboard', methods=['GET', 'POST'])
 @is_admin
 def dashboard():
-    orders = db.child("orders").get().val()
+    orders = db.child("orders").order_by_child("status").equal_to("OPEN").get().val()
     return render_template("dashboard.html", orders=orders)
+
+
+@app.route('/checkout_order/<string:order_id>', methods=['GET', 'POST'])
+def checkout_order(order_id):
+    order = db.child("orders").child(order_id).update({"status": "CLOSED"})
+    print(order)
+    return redirect(url_for("dashboard"))
+
+
+@app.route('/order_history')
+def order_history():
+    orders = db.child("orders").order_by_child("status").equal_to("CLOSED").get().val()
+
+    return render_template("order_history.html", orders=orders)
+    
+
+@app.route('/delete_order/<string:id>')
+def delete_order(id):
+    db.child("orders").child(id).remove()
+    return redirect(url_for("order_history"))
+
+
 
 @app.route('/admin/logout/')
 @is_logged_in
