@@ -125,15 +125,27 @@ def confirm_order():
 
 @app.route('/add_product/<string:order_id>')
 def add_product(order_id):
-    print(order_id)
-    order = db.child("orders").child(order_id).get().val()
-    if "cigarettes" in [o.keys() for o in order["order"]]:
-        order["order"].append({"cigarettes": order["order"]})
-    print(order)
-    # if "cigarettes" in order.keys():
-    #     res = db.child("orders").child(order_id).child("order").update({"cigarettes": order["cigarettes"] + 1, "total": order["total"] + 20})
-    # else:
-    #     res = db.child("orders").child(order_id).child("order").push({"cigarettes": 1, "total": order["total"] + 20})
+    all_order = dict(db.child("orders").child(order_id).get().val())
+    orders = all_order["order"] 
+    print(all_order)
+    pro = {
+        "name": "Cigarettes",
+        "amount": 20,
+        "quantity": 1
+    }
+    for order in orders:
+        if order.get("name") == "Cigarettes":
+            order["quantity"] += 1
+            order["amount"] += 20
+            all_order["total"] += 20
+
+            break
+    else:
+        orders.append(pro)
+        all_order["total"] += 20
+    print(orders)
+    res = db.child("orders").child(order_id).set(all_order)
+
     flash("Product addedd successfully", "success")
     return redirect(url_for("dashboard"))
 
@@ -189,7 +201,8 @@ def checkin():
 
 @app.route('/manage_tabs')
 def manage_tabs():
-    orders = db.child("orders").order_by_child("type").equal_to("tab").get().val()
+    orders = db.child("orders").order_by_child("type").equal_to("tab").order_by_child("status").equal_to("CLOSED").get().val()
+    print(orders)
 
 
     return render_template("manage_tabs.html", orders=orders)
@@ -217,7 +230,6 @@ def manage_menu():
    
 
     menu  = db.child("menu").get().val()
-    print(menu)
     return render_template("manage_menu.html", menu = menu)
 
 @app.route("/delete_menu/<id>")
@@ -246,7 +258,6 @@ def login():
                 return redirect(url_for('dashboard'))
         if user:
             u = list(dict(user).values())[0]
-            print(u)
             if email == u["email"] and password == u["password"]:
                 session["logged_in"] = True
                 session["email"] = email
@@ -254,8 +265,6 @@ def login():
                 session["name"] = u["name"]
                 print('password matched')
                 return redirect(url_for('tab_checkin'))
-            else:
-                print("no")
         
 
 

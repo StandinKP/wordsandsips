@@ -47,13 +47,19 @@
         <button class="btn btn-primary" onclick="printDiv(`print_{{id}}`)">
           Print
         </button>
-        <button class="btn btn-primary">
+        <button class="btn btn-success">
           <a
             class="text-white text-decoration-none"
             href="{{url_for('checkout_order', order_id=id)}}"
             >Checkout
           </a>
         </button>
+        <a
+          class="text-black text-decoration-none"
+          href="{{url_for('add_product', order_id=id)}}"
+        >
+          <button class="btn btn-outline-secondary">&plus;</button>
+        </a>
       </div>
     </div>
   </div>
