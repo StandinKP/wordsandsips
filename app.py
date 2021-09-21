@@ -194,14 +194,16 @@ def checkin():
         session["cart"] = {"products": {}, "cart_total":0}
         session["quantity"] = quantity
         session["start_time"] = start_time
+        session["type"] = "customer"
         if location == 'inside':
             session["service_charge"] = 100 * quantity
         return redirect(url_for('menu'))
 
 
 @app.route('/manage_tabs')
+@is_logged_in
 def manage_tabs():
-    orders = db.child("orders").order_by_child("type").equal_to("tab").order_by_child("status").equal_to("CLOSED").get().val()
+    orders = db.child("orders").order_by_child("type").equal_to("tab").get().val()
     print(orders)
 
 
@@ -361,7 +363,7 @@ def tab_checkin():
             "quantity": quantity,
             "start_time": start_time
         }
-        results = db.child("users").push(data)
+        results = db.child("users").order_by_child("name").equal_to(session["name"]).push(data)
         session["id"] = results["name"]
         session['location'] = location
         session['table'] = table
