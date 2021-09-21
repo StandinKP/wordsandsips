@@ -195,8 +195,7 @@ def checkin():
         session["quantity"] = quantity
         session["start_time"] = start_time
         session["type"] = "customer"
-        if location == 'inside':
-            session["service_charge"] = 100 * quantity
+        session["service_charge"] = 100 * quantity
         return redirect(url_for('menu'))
 
 
@@ -212,7 +211,7 @@ def manage_tabs():
 @app.route('/menu')
 def menu():
     menu  = db.child("menu").get().val()
-    categories = set([menu[item]["category"] for item in menu.keys()])
+    categories = set([menu[item]["category"] for item in menu])
     return render_template("menu.html", menu=menu, categories=categories)
 
 
@@ -370,8 +369,7 @@ def tab_checkin():
         session["cart"] = {"products": {}, "cart_total":0}
         session["quantity"] = quantity
         session["start_time"] = start_time
-        if location == 'inside':
-            session["service_charge"] = 100 * quantity
+        session["service_charge"] = 100 * quantity
         return redirect(url_for('menu'))
 
 
