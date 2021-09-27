@@ -11,7 +11,8 @@
       <div class="card-body">
         <h5 class="card-title">
           Order No. {{orders[id].order_no}} | {{orders[id].name}} |
-          {{orders[id].start_time}} | {{orders[id].location | capitalize}}
+          {{orders[id].start_time}} | Table {{orders[id].table}} |
+          {{orders[id].location | capitalize}}
         </h5>
         <table class="table">
           <thead>

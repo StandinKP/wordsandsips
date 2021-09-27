@@ -103,11 +103,9 @@ def confirm_order():
     cart.append({
         "entry_fee": session["service_charge"]
     })
-    total = 0
-    if session["cart"]["cart_total"] <= session["service_charge"]:
-        total = session["service_charge"]
-    else:
-        total = session["cart"]["cart_total"] - session["service_charge"]
+    total = session["service_charge"]
+    if session["cart"]["cart_total"] > session["service_charge"]:
+        total += session["cart"]["cart_total"] - session["service_charge"]
     data = {
         "name": session["name"],
         "order_no": order_id,
@@ -116,11 +114,11 @@ def confirm_order():
         'location': session["location"],
         "start_time": session["start_time"],
         "status": "OPEN",
+        "table": session["table"],
         "type": session["type"]
     }
         
-    if session["location"] == "inside":
-        data.update({"quantity": session["quantity"]})
+    data.update({"quantity": session["quantity"]})
     res = db.child("orders").push(data)
     session["cart"] = {"products": {}, "cart_total": 0}
     session["service_charge"] = 0
@@ -296,24 +294,36 @@ def checkout_order(order_id):
 def order_history():
     orders = db.child("orders").order_by_child("status").equal_to("CLOSED").get().val()
     new_orders = {}
+    total = 0
     if orders:
         for id in orders.keys():
             if orders[id]["type"] != "tab":
                 new_orders[id] = orders[id]
+                total += orders[id]["total"]
 
 
-    return render_template("order_history.html", orders=new_orders)
+    return render_template("order_history.html", orders=new_orders, total=total)
     
 @app.route('/delete_users')
 def delete_users():
     users = db.child("users").get().val()
-    print(users)
     if users:
         for id in users.keys():
             db.child(f"users/{id}").remove() if users[id]["type"]=='customer' else None
         flash("deleted", "success")
     else:
-        flash("No usres", "info")
+        flash("No users", "info")
+    return redirect(url_for("order_history"))
+
+@app.route('/delete_orders')
+def delete_orders():
+    orders = db.child("orders").get().val()
+    if orders:
+        for id in orders.keys():
+            db.child(f"orders/{id}").remove() if orders[id]["type"]=='customer' else None
+        flash("deleted", "success")
+    else:
+        flash("No orders", "info")
     return redirect(url_for("order_history"))
 
 @app.route('/delete_order/<string:id>')

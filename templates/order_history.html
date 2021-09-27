@@ -2,9 +2,17 @@
 %}
 <div class="d-flex justify-content-between">
   <h3>Order History</h3>
-  <a href="{{url_for('delete_users')}}">
-    <button class="btn btn-secondary">Delete all orders</button>
-  </a>
+  <span>
+    <span>Total: &#8377; {{total}}</span>
+    <a href="{{url_for('delete_users')}}">
+      <button class="btn btn-secondary">Delete all users</button>
+    </a>
+    <span>
+      <a href="{{url_for('delete_orders')}}">
+        <button class="btn btn-secondary">Delete all orders</button>
+      </a>
+    </span>
+  </span>
 </div>
 <hr />
 {% if orders %}
@@ -21,7 +29,7 @@
         aria-controls="toggle_{{loop.index}}"
       >
         {{orders[id].order_no}} | {{orders[id].name}} |
-        {{orders[id].start_time}} | {{orders[id].location | capitalize}}
+        {{orders[id].start_time}} | &#8377;{{orders[id].total}}
       </button>
     </h2>
     <div
