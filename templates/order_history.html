@@ -1,5 +1,11 @@
-{% extends 'layout.html' %} {% block body %}
-<h3>Order History</h3>
+{% extends 'layout.html' %} {% block body %} {% include "includes/message.html"
+%}
+<div class="d-flex justify-content-between">
+  <h3>Order History</h3>
+  <a href="{{url_for('delete_users')}}">
+    <button class="btn btn-secondary">Delete all orders</button>
+  </a>
+</div>
 <hr />
 {% if orders %}
 <div class="accordion accordion-flush" id="menuItems">

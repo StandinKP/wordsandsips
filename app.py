@@ -103,16 +103,22 @@ def confirm_order():
     cart.append({
         "entry_fee": session["service_charge"]
     })
+    total = 0
+    if session["cart"]["cart_total"] <= session["service_charge"]:
+        total = session["service_charge"]
+    else:
+        total = session["cart"]["cart_total"] - session["service_charge"]
     data = {
         "name": session["name"],
         "order_no": order_id,
         "order": cart,
-        "total": session["cart"]["cart_total"] + session["service_charge"],
+        "total": total,
         'location': session["location"],
         "start_time": session["start_time"],
         "status": "OPEN",
         "type": session["type"]
     }
+        
     if session["location"] == "inside":
         data.update({"quantity": session["quantity"]})
     res = db.child("orders").push(data)
@@ -289,9 +295,26 @@ def checkout_order(order_id):
 @app.route('/order_history')
 def order_history():
     orders = db.child("orders").order_by_child("status").equal_to("CLOSED").get().val()
+    new_orders = {}
+    if orders:
+        for id in orders.keys():
+            if orders[id]["type"] != "tab":
+                new_orders[id] = orders[id]
 
-    return render_template("order_history.html", orders=orders)
+
+    return render_template("order_history.html", orders=new_orders)
     
+@app.route('/delete_users')
+def delete_users():
+    users = db.child("users").get().val()
+    print(users)
+    if users:
+        for id in users.keys():
+            db.child(f"users/{id}").remove() if users[id]["type"]=='customer' else None
+        flash("deleted", "success")
+    else:
+        flash("No usres", "info")
+    return redirect(url_for("order_history"))
 
 @app.route('/delete_order/<string:id>')
 def delete_order(id):
