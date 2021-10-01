@@ -18,15 +18,28 @@
               aria-label="Default select example"
             >
               <option selected>Select Category</option>
-              <option value="sandwiches">Sandwiches</option>
-              <option value="pizza">Pizza</option>
-              <option value="drinks">Drinks</option>
+
+              <option value="Pizza">Pizza</option>
+              <option value="Maggi">Maggi</option>
+              <option value="Wraps">Wraps</option>
+              <option value="Grill Sandwiches">Grill Sandwiches</option>
+              <option value="Plain Sandwiches">Plain Sandwiches</option>
+              <option value="Non Veg">Non Veg</option>
+              <option value="Pasta">Pasta</option>
+              <option value="Hot Beverages">Hot Beverages</option>
+              <option value="Cold Beverages">Cold Beverages</option>
+              <option value="Burger">Burger</option>
+              <option value="Shakes">Shakes</option>
+              <option value="Munchies">Munchies</option>
+              <option value="French Fries">French Fries</option>
+              <option value="Dessert">Dessert</option>
+              <option value="Nachos">Nachos</option>
+              <option value="Momos">Momos</option>
+              <option value="Sizzlers">Sizzlers</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="exampleInputEmail1" class="form-label"
-              >Item Name</label
-            >
+            <label for="exampleInputEmail1" class="form-label">Item Name</label>
             <input
               name="item_name"
               type="text"
@@ -58,9 +71,7 @@
               class="form-check-input"
               id="exampleCheck1"
             />
-            <label class="form-check-label" for="exampleCheck1"
-              >Activate</label
-            >
+            <label class="form-check-label" for="exampleCheck1">Activate</label>
           </div>
           <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -68,7 +79,7 @@
     </div>
   </div>
   <div class="col-6">
-    <div class="card" style="width: auto">
+    <div class="card overflow-scroll" style="height: 30rem">
       <div class="card-body">
         <h5 class="card-title">Available Menu</h5>
         <table class="table">
@@ -104,13 +115,13 @@
 </div>
 <script>
   async function delete_menu(item) {
-    console.log('hi');
+    console.log("hi");
     const res = await fetch(`/delete_menu/${item}`, {
-      method: 'GET',
+      method: "GET",
     });
     const data = await res.json();
-    if (data['success']) {
-      window.location.href = '/manage_menu';
+    if (data["success"]) {
+      window.location.href = "/manage_menu";
     }
   }
 </script>

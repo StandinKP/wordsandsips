@@ -73,10 +73,10 @@
 <script>
   setInterval(() => {
     setInterval(location.reload(), 1000);
-  }, 5000);
+  }, 30000);
   function printDiv(divName) {
     var printContents = document.getElementById(divName);
-    var cardFooter = printContents.getElementsByClassName('card-footer')[0];
+    var cardFooter = printContents.getElementsByClassName("card-footer")[0];
     cardFooter.remove();
     w = window.open();
     w.document.write(printContents.innerHTML);

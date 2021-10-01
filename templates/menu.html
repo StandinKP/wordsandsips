@@ -81,8 +81,8 @@
               <li>
                 <span class="text-white">
                   {% if 'service_charge' in session %}
-                  &#8377;{{session.cart.cart_total + session.service_charge}}
-                  {% else %} &#8377;{{session.cart.cart_total}} {% endif %}
+                  &#8377;{{session.cart.cart_total + session.service_charge}} {%
+                  else %} &#8377;{{session.cart.cart_total}} {% endif %}
                 </span>
                 <a href="/checkout">
                   <i class="fas fa-shopping-cart text-info pt-2"></i>
@@ -97,7 +97,6 @@
         <h1 class="display-3 module-title font-alt mb-5">
           Welcome to Words and Sips Book Cafe
         </h1>
-        {{session}} {{categories}}
         <div class="accordion accordion-flush" id="menuItems">
           {% for category in categories %}
           <div class="accordion-item">
